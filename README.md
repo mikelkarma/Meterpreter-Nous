@@ -31,7 +31,7 @@ Clone o repositório e navegue até o diretório:
 ```bash
 git clone https://github.com/mikelkarma/Meterpreter-Nous
 cd Meterpreter-Nous
-sh install.sh # Debian
+sh install.sh
 ```
 
 ## [ EXECUTION MODE ]  
