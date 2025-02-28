@@ -53,13 +53,13 @@ Exemplos de execução:
 **1. Configuração de um host sem Tor:**
 
 ```bash
-python script.py --host 192.168.0.1 --porta 8080 --tor false
+python nous.py --host 192.168.0.1 --porta 8080 --tor false
 ```
 
 **2. Configuração de um host .onion com Tor:**
 
 ```bash
-python script.py --host exemplo.onion --porta 8080 --tor true
+python nous.py --host exemplo.onion --porta 8080 --tor true
 ```
 
 ---
