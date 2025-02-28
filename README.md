@@ -45,7 +45,7 @@ sh install.sh # Debian
 Defina o host e a porta diretamente na CLI:
 
 ```bash
-python script.py --host <IP ou domínio> --porta <porta> --tor <true/false>
+python nous.py --host <IP ou domínio> --porta <porta> --tor <true/false>
 ```
 
 Exemplos de execução:
