@@ -59,6 +59,7 @@ O APK gerado possui funcionalidades como:
 - Captura de textos exibidos na tela, permitindo registrar mensagens de redes sociais.  
 - Armazenamento das mensagens capturadas no diretório `/sdcard/.nous/key.sql`.  
 - Captura de imagens da câmera frontal e traseira ao criar os arquivos `web1` e `web2` no diretório `/sdcard/.nous/`, gerando as imagens em `.photo.nous`.  
+- E funcionalidades do meterpreter
 
 Os scripts para ativação dessas funções no Metasploit estão disponíveis em `msf-scripts`. Para utilizá-los, copie-os para o seu ambiente e execute:  
 
