@@ -1,7 +1,5 @@
 # **Meterpreter-Nous**  
 
-![Logo](https://raw.githubusercontent.com/mikelkarma/Meterpreter-Nous/refs/heads/main/screenshot.png)  
-
 **Meterpreter-Nous** é um script que modifica e recompila um APK, permitindo configurar conexões dinâmicas com ou sem o uso de Tor.  
 
 ---
